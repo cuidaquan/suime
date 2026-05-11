@@ -1,16 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useMutation } from "@tanstack/react-query";
 import AddressForm from "./components/AddressForm";
+import AnalysisSummary from "./components/AnalysisSummary";
 import AiSettingsPanel from "./components/AiSettingsPanel";
+import PersonaCard from "./components/PersonaCard";
 import StatusBanner from "./components/StatusBanner";
 import { aiValidationMessages, defaultAiConfig } from "./config/env";
 import { generatePersona } from "./lib/ai/generatePersona";
-import type { WalletActivityFetchResult } from "./types/analysis";
+import type { AiConfig, WalletActivityFetchResult, WalletActivitySummary } from "./types/analysis";
 import { validateSuiAddress } from "./lib/sui/client";
 import { fetchRecentActivity } from "./lib/sui/fetchRecentActivity";
 import { extractMetrics } from "./lib/analysis/extractMetrics";
-import type { AiConfig } from "./types/analysis";
 
 const AI_STORAGE_KEY = "suime.ai-config";
 
@@ -18,6 +19,7 @@ export default function App() {
   const currentAccount = useCurrentAccount();
   const [address, setAddress] = useState("");
   const [aiConfig, setAiConfig] = useState<AiConfig>(defaultAiConfig);
+  const personaCardRef = useRef<HTMLDivElement>(null);
 
   const addressValidation = useMemo(
     () => (address ? validateSuiAddress(address) : { isValid: false, message: "" }),
@@ -42,11 +44,15 @@ export default function App() {
   });
 
   const personaMutation = useMutation({
-    mutationFn: async (activity: WalletActivityFetchResult) => {
-      const summary = extractMetrics(activity);
+    mutationFn: async (summary: WalletActivitySummary) => {
       return generatePersona(summary, aiConfig);
     },
   });
+
+  const activitySummary = useMemo(
+    () => (activityMutation.data ? extractMetrics(activityMutation.data) : null),
+    [activityMutation.data],
+  );
 
   useEffect(() => {
     const storedValue = window.localStorage.getItem(AI_STORAGE_KEY);
@@ -88,7 +94,8 @@ export default function App() {
     }
 
     const activity = await activityMutation.mutateAsync(address.trim());
-    await personaMutation.mutateAsync(activity);
+    const summary = extractMetrics(activity);
+    await personaMutation.mutateAsync(summary);
   };
 
   const handleClearAiConfig = () => {
@@ -116,84 +123,110 @@ export default function App() {
         </div>
       </section>
 
-      <AddressForm
-        address={address}
-        onAddressChange={setAddress}
-        onUseConnectedWallet={handleUseConnectedWallet}
-        validationMessage={addressValidation.message}
-        onAnalyze={handleAnalyze}
-        isAnalyzing={activityMutation.isPending || personaMutation.isPending}
-      />
-
-      <AiSettingsPanel value={aiConfig} onChange={setAiConfig} onClear={handleClearAiConfig} />
-
-      {aiValidationMessage ? (
-        <section className="panel">
-          <StatusBanner tone="error" message={aiValidationMessage} />
-        </section>
-      ) : (
-        <section className="panel">
-          <StatusBanner
-            tone="neutral"
-            message="AI config looks ready. The next tasks will wire the persona card output into the UI."
+      <div className="dashboard-grid">
+        <div className="dashboard-column">
+          <AddressForm
+            address={address}
+            onAddressChange={setAddress}
+            onUseConnectedWallet={handleUseConnectedWallet}
+            validationMessage={addressValidation.message}
+            onAnalyze={handleAnalyze}
+            isAnalyzing={activityMutation.isPending || personaMutation.isPending}
           />
-        </section>
-      )}
 
-      <section className="panel card-panel">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Recent Activity</p>
-            <h2>Read-chain status</h2>
-          </div>
+          <AiSettingsPanel value={aiConfig} onChange={setAiConfig} onClear={handleClearAiConfig} />
+
+          {aiValidationMessage ? (
+            <section className="panel">
+              <StatusBanner tone="error" message={aiValidationMessage} />
+            </section>
+          ) : (
+            <section className="panel">
+              <StatusBanner
+                tone="success"
+                message="AI config is ready. Analyze a wallet to turn recent chain behavior into a shareable SuiMe card."
+              />
+            </section>
+          )}
+
+          <section className="panel card-panel">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">Read-Chain Status</p>
+                <h2>Live pipeline state</h2>
+              </div>
+            </div>
+
+            {activityMutation.isPending ? (
+              <p className="helper-copy">Fetching recent Sui activity for this wallet...</p>
+            ) : null}
+
+            {personaMutation.isPending ? (
+              <p className="helper-copy">
+                Sending structured wallet analysis to your AI endpoint...
+              </p>
+            ) : null}
+
+            {activityMutation.isError ? (
+              <p className="error-copy">{activityMutation.error.message}</p>
+            ) : null}
+
+            {personaMutation.isError ? (
+              <p className="error-copy">{personaMutation.error.message}</p>
+            ) : null}
+
+            {activitySummary ? (
+              <div className="result-panel">
+                <div className="result-metric">
+                  <span>Wallet</span>
+                  <strong>{activitySummary.walletAddress}</strong>
+                </div>
+                <div className="result-metric">
+                  <span>Transactions Loaded</span>
+                  <strong>{activitySummary.transactionCount}</strong>
+                </div>
+                <div className="result-metric">
+                  <span>Candidate Persona</span>
+                  <strong>{activitySummary.candidatePersona}</strong>
+                </div>
+                <div className="result-metric">
+                  <span>AI Persona Name</span>
+                  <strong>{personaMutation.data?.personaName ?? "Waiting for AI response"}</strong>
+                </div>
+              </div>
+            ) : (
+              <p className="helper-copy">
+                Run one wallet analysis to populate scores, evidence, and the final persona card.
+              </p>
+            )}
+          </section>
+
+          {activitySummary ? <AnalysisSummary summary={activitySummary} /> : null}
         </div>
 
-        {activityMutation.isPending ? (
-          <p className="helper-copy">Fetching recent Sui activity for this wallet...</p>
-        ) : null}
-
-        {personaMutation.isPending ? (
-          <p className="helper-copy">Sending structured wallet analysis to your AI endpoint...</p>
-        ) : null}
-
-        {activityMutation.isError ? (
-          <p className="error-copy">{activityMutation.error.message}</p>
-        ) : null}
-
-        {personaMutation.isError ? (
-          <p className="error-copy">{personaMutation.error.message}</p>
-        ) : null}
-
-        {activityMutation.isSuccess && activityMutation.data.transactions.length === 0 ? (
-          <p className="helper-copy">
-            No recent transactions were found for this address. The wallet can still map to a
-            dormant persona later.
-          </p>
-        ) : null}
-
-        {activityMutation.isSuccess && activityMutation.data.transactions.length > 0 ? (
-          <div className="result-panel">
-            <div className="result-metric">
-              <span>Wallet</span>
-              <strong>{activityMutation.data.walletAddress}</strong>
-            </div>
-            <div className="result-metric">
-              <span>Transactions Loaded</span>
-              <strong>{activityMutation.data.transactions.length}</strong>
-            </div>
-            <div className="result-metric">
-              <span>Latest Digest</span>
-              <strong>{activityMutation.data.transactions[0]?.digest}</strong>
-            </div>
-            {personaMutation.data ? (
-              <div className="result-metric">
-                <span>AI Persona Name</span>
-                <strong>{personaMutation.data.personaName}</strong>
+        <div className="dashboard-column">
+          {activitySummary && personaMutation.data ? (
+            <PersonaCard ref={personaCardRef} persona={personaMutation.data} summary={activitySummary} />
+          ) : (
+            <section className="panel persona-preview-shell">
+              <div className="persona-card persona-card-placeholder">
+                <div className="persona-card-topline">
+                  <span className="persona-brand">SuiMe</span>
+                  <span className="persona-serial">READY</span>
+                </div>
+                <div className="placeholder-copy">
+                  <p className="eyebrow">Persona Card</p>
+                  <h2>Your generated card appears here.</h2>
+                  <p>
+                    Connect or paste a wallet, add your AI key, and run analysis to render the
+                    share image.
+                  </p>
+                </div>
               </div>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
+            </section>
+          )}
+        </div>
+      </div>
     </main>
   );
 }

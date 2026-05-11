@@ -1,6 +1,10 @@
 import type { AiConfig } from "../types/analysis";
 import type { PersonaVisualMap } from "../types/persona";
 
+function personaAsset(path: string) {
+  return new URL(path, import.meta.url).href;
+}
+
 export const defaultAiConfig: AiConfig = {
   apiKey: "",
   baseUrl: "https://api.openai.com/v1/chat/completions",
@@ -35,42 +39,42 @@ export const aiValidationMessages = {
 
 export const personaVisualDefaults: PersonaVisualMap = {
   "defi-gambler": {
-    imageAsset: "/src/assets/personas/defi-gambler.png",
+    imageAsset: personaAsset("../assets/personas/defi-gambler.png"),
     accentToken: "#67f7cd",
     serialPrefix: "DF",
   },
   "nft-archaeologist": {
-    imageAsset: "/src/assets/personas/nft-archaeologist.png",
+    imageAsset: personaAsset("../assets/personas/nft-archaeologist.png"),
     accentToken: "#ffd87a",
     serialPrefix: "NA",
   },
   "protocol-tourist": {
-    imageAsset: "/src/assets/personas/protocol-tourist.png",
+    imageAsset: personaAsset("../assets/personas/protocol-tourist.png"),
     accentToken: "#84b6ff",
     serialPrefix: "PT",
   },
   "airdrop-hunter": {
-    imageAsset: "/src/assets/personas/airdrop-hunter.png",
+    imageAsset: personaAsset("../assets/personas/airdrop-hunter.png"),
     accentToken: "#ff9ca8",
     serialPrefix: "AH",
   },
   "dormant-address": {
-    imageAsset: "/src/assets/personas/dormant-address.png",
+    imageAsset: personaAsset("../assets/personas/dormant-address.png"),
     accentToken: "#b8c3d0",
     serialPrefix: "DA",
   },
   "move-builder": {
-    imageAsset: "/src/assets/personas/move-builder.png",
+    imageAsset: personaAsset("../assets/personas/move-builder.png"),
     accentToken: "#93ff7a",
     serialPrefix: "MB",
   },
   "asset-archivist": {
-    imageAsset: "/src/assets/personas/asset-archivist.png",
+    imageAsset: personaAsset("../assets/personas/asset-archivist.png"),
     accentToken: "#f8b46a",
     serialPrefix: "AA",
   },
   "gas-burner": {
-    imageAsset: "/src/assets/personas/gas-burner.png",
+    imageAsset: personaAsset("../assets/personas/gas-burner.png"),
     accentToken: "#f870ff",
     serialPrefix: "GB",
   },
