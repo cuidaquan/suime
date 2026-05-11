@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useMutation } from "@tanstack/react-query";
 import AddressForm from "./components/AddressForm";
 import AnalysisSummary from "./components/AnalysisSummary";
 import AiSettingsPanel from "./components/AiSettingsPanel";
+import DownloadButton from "./components/DownloadButton";
 import PersonaCard from "./components/PersonaCard";
 import StatusBanner from "./components/StatusBanner";
 import { aiValidationMessages, defaultAiConfig } from "./config/env";
@@ -19,7 +20,7 @@ export default function App() {
   const currentAccount = useCurrentAccount();
   const [address, setAddress] = useState("");
   const [aiConfig, setAiConfig] = useState<AiConfig>(defaultAiConfig);
-  const personaCardRef = useRef<HTMLDivElement>(null);
+  const [personaCardNode, setPersonaCardNode] = useState<HTMLDivElement | null>(null);
 
   const addressValidation = useMemo(
     () => (address ? validateSuiAddress(address) : { isValid: false, message: "" }),
@@ -76,6 +77,10 @@ export default function App() {
 
     window.localStorage.removeItem(AI_STORAGE_KEY);
   }, [aiConfig]);
+
+  const handlePersonaCardRef = useCallback((node: HTMLDivElement | null) => {
+    setPersonaCardNode(node);
+  }, []);
 
   const handleUseConnectedWallet = () => {
     if (!currentAccount?.address) {
@@ -206,7 +211,26 @@ export default function App() {
 
         <div className="dashboard-column">
           {activitySummary && personaMutation.data ? (
-            <PersonaCard ref={personaCardRef} persona={personaMutation.data} summary={activitySummary} />
+            <>
+              <PersonaCard
+                ref={handlePersonaCardRef}
+                persona={personaMutation.data}
+                summary={activitySummary}
+              />
+              <section className="panel card-panel">
+                <div className="panel-header">
+                  <div>
+                    <p className="eyebrow">Share Output</p>
+                    <h2>Export or post the card</h2>
+                  </div>
+                </div>
+                <DownloadButton
+                  cardNode={personaCardNode}
+                  personaName={personaMutation.data.personaName}
+                  walletAddress={activitySummary.walletAddress}
+                />
+              </section>
+            </>
           ) : (
             <section className="panel persona-preview-shell">
               <div className="persona-card persona-card-placeholder">

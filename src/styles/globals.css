@@ -173,6 +173,11 @@ input.text-input {
   margin-top: 18px;
 }
 
+.download-actions {
+  display: grid;
+  gap: 12px;
+}
+
 .action-row {
   display: flex;
   flex-wrap: wrap;
@@ -233,6 +238,10 @@ input.text-input {
 .error-copy {
   margin: 14px 0 0;
   color: #ff9898;
+}
+
+.inline-error {
+  margin-top: 0;
 }
 
 .status-banner {
@@ -399,8 +408,7 @@ input.text-input {
 }
 
 .persona-preview-shell {
-  position: sticky;
-  top: 24px;
+  position: static;
 }
 
 .persona-card {
@@ -650,10 +658,6 @@ input.text-input {
 @media (max-width: 1100px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
-  }
-
-  .persona-preview-shell {
-    position: static;
   }
 }
 
