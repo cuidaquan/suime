@@ -183,6 +183,19 @@ export default function App() {
 
           <AiSettingsPanel value={aiConfig} onChange={setAiConfig} onClear={handleClearAiConfig} />
 
+          <section className="panel card-panel">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">MVP Note</p>
+                <h2>Bring your own AI key</h2>
+              </div>
+            </div>
+            <p className="helper-copy">
+              SuiMe does not provide, proxy, or subsidize AI usage in this MVP. Your API key stays
+              in the browser and is only sent directly to the compatible endpoint you configure.
+            </p>
+          </section>
+
           <section className="panel">
             <StatusBanner tone={runState.tone} message={runState.message} />
           </section>
