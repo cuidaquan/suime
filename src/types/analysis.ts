@@ -1,5 +1,22 @@
 import type { PersonaKey } from "./persona";
 
+export interface RecentMoveCall {
+  packageId: string;
+  module?: string;
+  function?: string;
+}
+
+export interface RecentTransactionItem {
+  digest: string;
+  timestampMs: number | null;
+  checkpoint?: string;
+  gasUsed: string | null;
+  balanceChangeCount: number;
+  objectChangeCount: number;
+  moveCalls: RecentMoveCall[];
+  rawSender?: string;
+}
+
 export interface WalletMetrics {
   activity: number;
   exploration: number;
@@ -28,4 +45,9 @@ export interface AiConfig {
   baseUrl: string;
   model: string;
   rememberOnDevice: boolean;
+}
+
+export interface WalletActivityFetchResult {
+  walletAddress: string;
+  transactions: RecentTransactionItem[];
 }

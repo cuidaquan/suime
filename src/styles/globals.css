@@ -149,6 +149,12 @@ select {
   margin-top: 18px;
 }
 
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .secondary-button {
   width: fit-content;
   padding: 12px 18px;
@@ -160,6 +166,18 @@ select {
   cursor: pointer;
 }
 
+.primary-button {
+  width: fit-content;
+  padding: 12px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f7fb;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-button:disabled,
 .secondary-button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
@@ -174,6 +192,30 @@ select {
 .error-copy {
   margin: 14px 0 0;
   color: #ff9898;
+}
+
+.result-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.result-metric {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.result-metric span {
+  color: rgba(244, 247, 251, 0.62);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.result-metric strong {
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 720px) {

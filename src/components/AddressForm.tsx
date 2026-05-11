@@ -5,6 +5,8 @@ interface AddressFormProps {
   onAddressChange: (value: string) => void;
   onUseConnectedWallet: () => void;
   validationMessage: string;
+  onAnalyze: () => void;
+  isAnalyzing: boolean;
 }
 
 export default function AddressForm({
@@ -12,6 +14,8 @@ export default function AddressForm({
   onAddressChange,
   onUseConnectedWallet,
   validationMessage,
+  onAnalyze,
+  isAnalyzing,
 }: AddressFormProps) {
   const currentAccount = useCurrentAccount();
 
@@ -37,14 +41,24 @@ export default function AddressForm({
       </label>
 
       <div className="inline-actions">
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={onUseConnectedWallet}
-          disabled={!currentAccount?.address}
-        >
-          {currentAccount?.address ? "Use Connected Wallet" : "No Wallet Connected"}
-        </button>
+        <div className="action-row">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onUseConnectedWallet}
+            disabled={!currentAccount?.address || isAnalyzing}
+          >
+            {currentAccount?.address ? "Use Connected Wallet" : "No Wallet Connected"}
+          </button>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={onAnalyze}
+            disabled={!address.trim() || isAnalyzing}
+          >
+            {isAnalyzing ? "Reading Wallet..." : "Analyze My Sui"}
+          </button>
+        </div>
         <p className="helper-copy">
           {currentAccount?.address
             ? `Connected: ${currentAccount.address}`
