@@ -7,6 +7,7 @@ interface AddressFormProps {
   validationMessage: string;
   onAnalyze: () => void;
   isAnalyzing: boolean;
+  analyzeLabel?: string;
 }
 
 export default function AddressForm({
@@ -16,6 +17,7 @@ export default function AddressForm({
   validationMessage,
   onAnalyze,
   isAnalyzing,
+  analyzeLabel,
 }: AddressFormProps) {
   const currentAccount = useCurrentAccount();
 
@@ -56,7 +58,7 @@ export default function AddressForm({
             onClick={onAnalyze}
             disabled={!address.trim() || isAnalyzing}
           >
-            {isAnalyzing ? "Reading Wallet..." : "Analyze My Sui"}
+            {isAnalyzing ? analyzeLabel ?? "Reading Wallet..." : "Analyze My Sui"}
           </button>
         </div>
         <p className="helper-copy">

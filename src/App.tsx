@@ -8,7 +8,9 @@ import DownloadButton from "./components/DownloadButton";
 import PersonaCard from "./components/PersonaCard";
 import StatusBanner from "./components/StatusBanner";
 import { aiValidationMessages, defaultAiConfig } from "./config/env";
+import { deriveRunState } from "./lib/app/deriveRunState";
 import { generatePersona } from "./lib/ai/generatePersona";
+import type { GeneratedPersona } from "./types/persona";
 import type { AiConfig, WalletActivityFetchResult, WalletActivitySummary } from "./types/analysis";
 import { validateSuiAddress } from "./lib/sui/client";
 import { fetchRecentActivity } from "./lib/sui/fetchRecentActivity";
@@ -16,11 +18,18 @@ import { extractMetrics } from "./lib/analysis/extractMetrics";
 
 const AI_STORAGE_KEY = "suime.ai-config";
 
+interface SuccessfulRunResult {
+  summary: WalletActivitySummary;
+  persona: GeneratedPersona;
+}
+
 export default function App() {
   const currentAccount = useCurrentAccount();
   const [address, setAddress] = useState("");
   const [aiConfig, setAiConfig] = useState<AiConfig>(defaultAiConfig);
   const [personaCardNode, setPersonaCardNode] = useState<HTMLDivElement | null>(null);
+  const [activeSummary, setActiveSummary] = useState<WalletActivitySummary | null>(null);
+  const [lastSuccessfulResult, setLastSuccessfulResult] = useState<SuccessfulRunResult | null>(null);
 
   const addressValidation = useMemo(
     () => (address ? validateSuiAddress(address) : { isValid: false, message: "" }),
@@ -49,11 +58,6 @@ export default function App() {
       return generatePersona(summary, aiConfig);
     },
   });
-
-  const activitySummary = useMemo(
-    () => (activityMutation.data ? extractMetrics(activityMutation.data) : null),
-    [activityMutation.data],
-  );
 
   useEffect(() => {
     const storedValue = window.localStorage.getItem(AI_STORAGE_KEY);
@@ -97,16 +101,53 @@ export default function App() {
     if (aiValidationMessage) {
       return;
     }
+    if (activityMutation.isPending || personaMutation.isPending) {
+      return;
+    }
 
-    const activity = await activityMutation.mutateAsync(address.trim());
-    const summary = extractMetrics(activity);
-    await personaMutation.mutateAsync(summary);
+    activityMutation.reset();
+    personaMutation.reset();
+    setActiveSummary(null);
+
+    try {
+      const activity = await activityMutation.mutateAsync(address.trim());
+      const summary = extractMetrics(activity);
+      setActiveSummary(summary);
+
+      const persona = await personaMutation.mutateAsync(summary);
+      setLastSuccessfulResult({
+        summary,
+        persona,
+      });
+    } catch {
+      // Errors are surfaced through the mutation state and run status banner.
+    }
   };
 
   const handleClearAiConfig = () => {
     setAiConfig(defaultAiConfig);
     window.localStorage.removeItem(AI_STORAGE_KEY);
   };
+
+  const displayedSummary = activeSummary ?? lastSuccessfulResult?.summary ?? null;
+  const displayedCardResult = lastSuccessfulResult;
+
+  const runState = deriveRunState({
+    hasReadyConfig: !aiValidationMessage,
+    isFetchingActivity: activityMutation.isPending,
+    isGeneratingPersona: personaMutation.isPending,
+    activityError: activityMutation.error?.message ?? null,
+    personaError: personaMutation.error?.message ?? null,
+    hasActiveSummary: Boolean(displayedSummary),
+    hasSuccessfulCard: Boolean(displayedCardResult),
+    transactionCount: displayedSummary?.transactionCount,
+  });
+
+  const analyzeLabel = activityMutation.isPending
+    ? "Reading Wallet..."
+    : personaMutation.isPending
+      ? "Generating Card..."
+      : undefined;
 
   return (
     <main className="app-shell">
@@ -137,22 +178,14 @@ export default function App() {
             validationMessage={addressValidation.message}
             onAnalyze={handleAnalyze}
             isAnalyzing={activityMutation.isPending || personaMutation.isPending}
+            analyzeLabel={analyzeLabel}
           />
 
           <AiSettingsPanel value={aiConfig} onChange={setAiConfig} onClear={handleClearAiConfig} />
 
-          {aiValidationMessage ? (
-            <section className="panel">
-              <StatusBanner tone="error" message={aiValidationMessage} />
-            </section>
-          ) : (
-            <section className="panel">
-              <StatusBanner
-                tone="success"
-                message="AI config is ready. Analyze a wallet to turn recent chain behavior into a shareable SuiMe card."
-              />
-            </section>
-          )}
+          <section className="panel">
+            <StatusBanner tone={runState.tone} message={runState.message} />
+          </section>
 
           <section className="panel card-panel">
             <div className="panel-header">
@@ -162,41 +195,30 @@ export default function App() {
               </div>
             </div>
 
-            {activityMutation.isPending ? (
-              <p className="helper-copy">Fetching recent Sui activity for this wallet...</p>
-            ) : null}
-
-            {personaMutation.isPending ? (
-              <p className="helper-copy">
-                Sending structured wallet analysis to your AI endpoint...
-              </p>
-            ) : null}
-
-            {activityMutation.isError ? (
-              <p className="error-copy">{activityMutation.error.message}</p>
-            ) : null}
-
-            {personaMutation.isError ? (
-              <p className="error-copy">{personaMutation.error.message}</p>
-            ) : null}
-
-            {activitySummary ? (
+            {displayedSummary ? (
               <div className="result-panel">
                 <div className="result-metric">
                   <span>Wallet</span>
-                  <strong>{activitySummary.walletAddress}</strong>
+                  <strong>{displayedSummary.walletAddress}</strong>
                 </div>
                 <div className="result-metric">
                   <span>Transactions Loaded</span>
-                  <strong>{activitySummary.transactionCount}</strong>
+                  <strong>{displayedSummary.transactionCount}</strong>
                 </div>
                 <div className="result-metric">
                   <span>Candidate Persona</span>
-                  <strong>{activitySummary.candidatePersona}</strong>
+                  <strong>{displayedSummary.candidatePersona}</strong>
                 </div>
                 <div className="result-metric">
                   <span>AI Persona Name</span>
-                  <strong>{personaMutation.data?.personaName ?? "Waiting for AI response"}</strong>
+                  <strong>
+                    {displayedCardResult?.summary.walletAddress === displayedSummary.walletAddress &&
+                    displayedCardResult.summary.transactionCount === displayedSummary.transactionCount
+                      ? displayedCardResult.persona.personaName
+                      : personaMutation.isPending
+                        ? "Generating a new persona..."
+                        : "Waiting for AI response"}
+                  </strong>
                 </div>
               </div>
             ) : (
@@ -206,16 +228,16 @@ export default function App() {
             )}
           </section>
 
-          {activitySummary ? <AnalysisSummary summary={activitySummary} /> : null}
+          {displayedSummary ? <AnalysisSummary summary={displayedSummary} /> : null}
         </div>
 
         <div className="dashboard-column">
-          {activitySummary && personaMutation.data ? (
+          {displayedCardResult ? (
             <>
               <PersonaCard
                 ref={handlePersonaCardRef}
-                persona={personaMutation.data}
-                summary={activitySummary}
+                persona={displayedCardResult.persona}
+                summary={displayedCardResult.summary}
               />
               <section className="panel card-panel">
                 <div className="panel-header">
@@ -226,8 +248,8 @@ export default function App() {
                 </div>
                 <DownloadButton
                   cardNode={personaCardNode}
-                  personaName={personaMutation.data.personaName}
-                  walletAddress={activitySummary.walletAddress}
+                  personaName={displayedCardResult.persona.personaName}
+                  walletAddress={displayedCardResult.summary.walletAddress}
                 />
               </section>
             </>
