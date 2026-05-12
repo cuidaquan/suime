@@ -15,7 +15,7 @@ import type { AiConfig, WalletActivityFetchResult, WalletActivitySummary } from 
 import { validateSuiAddress } from "./lib/sui/client";
 import { fetchRecentActivity } from "./lib/sui/fetchRecentActivity";
 import { extractMetrics } from "./lib/analysis/extractMetrics";
-import suimeLogo from "./assets/branding/suime-logo-1.png";
+import suimeLogo from "./assets/branding/derived/suime-logo-cropped-wrapper.svg";
 
 const AI_STORAGE_KEY = "suime.ai-config";
 
