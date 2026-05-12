@@ -15,6 +15,7 @@ import type { AiConfig, WalletActivityFetchResult, WalletActivitySummary } from 
 import { validateSuiAddress } from "./lib/sui/client";
 import { fetchRecentActivity } from "./lib/sui/fetchRecentActivity";
 import { extractMetrics } from "./lib/analysis/extractMetrics";
+import suimeLogo from "./assets/branding/suime-logo-1.png";
 
 const AI_STORAGE_KEY = "suime.ai-config";
 
@@ -152,6 +153,10 @@ export default function App() {
   return (
     <main className="app-shell">
       <section className="hero-panel">
+        <div className="hero-brand-lockup">
+          <img className="hero-logo" src={suimeLogo} alt="SuiMe logo" />
+        </div>
+
         <div className="hero-copy">
           <p className="eyebrow">SuiMe MVP</p>
           <h1>See your onchain self.</h1>

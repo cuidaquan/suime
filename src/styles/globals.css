@@ -51,6 +51,24 @@ select {
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+.hero-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.hero-logo {
+  display: block;
+  width: min(420px, 100%);
+  height: auto;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 18px 42px rgba(0, 214, 255, 0.1))
+    drop-shadow(0 8px 18px rgba(0, 0, 0, 0.28));
+  mix-blend-mode: screen;
+}
+
 .hero-copy {
   display: grid;
   gap: 0;
@@ -664,6 +682,10 @@ input.text-input {
 @media (max-width: 760px) {
   .app-shell {
     padding: 18px;
+  }
+
+  .hero-logo {
+    width: min(260px, 100%);
   }
 
   .hero-panel h1 {
