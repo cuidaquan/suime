@@ -7,12 +7,17 @@ function personaAsset(path: string) {
 
 export const defaultAiConfig: AiConfig = {
   apiKey: "",
-  baseUrl: "https://api.openai.com/v1/chat/completions",
-  model: "gpt-5-mini",
+  baseUrl: "https://api.deepseek.com/chat/completions",
+  model: "deepseek-v4-flash",
   rememberOnDevice: false,
 };
 
 export const supportedAiProviders = [
+  {
+    label: "DeepSeek Official",
+    baseUrl: "https://api.deepseek.com/chat/completions",
+    suggestedModel: "deepseek-v4-flash",
+  },
   {
     label: "OpenAI",
     baseUrl: "https://api.openai.com/v1/chat/completions",

@@ -12,7 +12,7 @@ export const generatedPersonaSchema = z.object({
   summary: z.string().min(1),
   tags: z.array(z.string().min(1)).min(3).max(5),
   traits: z.array(traitSchema).length(4),
-  evidence: z.array(z.string().min(1)).min(1).max(3),
+  evidence: z.array(z.string().min(1)).min(1).max(5),
 });
 
 export type GeneratedPersonaResponse = z.infer<typeof generatedPersonaSchema>;
