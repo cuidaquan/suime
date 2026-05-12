@@ -493,18 +493,8 @@ input.text-input {
 }
 
 .persona-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
   color: var(--card-accent);
   font-weight: 700;
-}
-
-.persona-brand-mark {
-  display: block;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
 }
 
 .persona-portrait-frame {

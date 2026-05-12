@@ -2,7 +2,6 @@ import { forwardRef, type CSSProperties } from "react";
 import { personaVisualDefaults } from "../config/env";
 import type { WalletActivitySummary } from "../types/analysis";
 import type { GeneratedPersona } from "../types/persona";
-import suimeLogoMark from "../assets/branding/suime-logo-mark.svg";
 
 interface PersonaCardProps {
   persona: GeneratedPersona;
@@ -102,10 +101,7 @@ export default forwardRef<HTMLDivElement, PersonaCardProps>(function PersonaCard
         }
       >
         <div className="persona-card-topline">
-          <span className="persona-brand">
-            <img className="persona-brand-mark" src={suimeLogoMark} alt="" aria-hidden="true" />
-            <span>SuiMe</span>
-          </span>
+          <span className="persona-brand">SuiMe</span>
           <span className="persona-serial">{theme.serial}</span>
         </div>
 
